@@ -26,11 +26,11 @@ def scrape_matches():
 
             contenedor_partidos = panel.find_next_sibling('div')
             if not contenedor_partidos:
-                continue  # Omitir ligas sin partidos
+                continue
 
-            partidos = contenedor_partidos.find_all('a', class_='match-link')
+            partidos = contenedor_partidos.find_all('div', class_='team-box')
             if not partidos:
-                continue  # Omitir ligas vacías
+                continue
                 
             league_data = {
                 "name": nombre_liga,
@@ -51,14 +51,31 @@ def scrape_matches():
                     nombre_visitante = visitante_div.find('div', class_='team-name').text.strip()
                     logo_visitante = visitante_div.find('img')['src'] if visitante_div.find('img') else ""
                 else:
-                    continue  # Omitir si no hay ambos equipos
+                    continue
 
-                marcador = partido.find('div', class_='marker')
-                if marcador:
-                    tiempo = marcador.get_text(strip=True)
-                else:
-                    hora = partido.find('p', class_='match_hour time')
-                    tiempo = hora.text.strip() if hora else ""
+                # Obtener marcador y estado del partido
+                marcador_div = partido.find('div', class_='marker')
+                tiempo = ""
+                estado = "scheduled"  # por defecto asumimos que no ha comenzado
+                marcador = ""
+                
+                if marcador_div:
+                    # Verificar si es un partido en vivo
+                    tiempo_tag = partido.find('span', class_='tag-nobg live')
+                    if tiempo_tag:
+                        estado = "live"
+                        tiempo = tiempo_tag.find('b').text.strip()  # Obtener el minuto
+                        marcador = marcador_div.get_text(strip=True)
+                    else:
+                        # Es un partido programado
+                        hora = marcador_div.find('p', class_='match_hour time')
+                        if hora:
+                            tiempo = hora.text.strip()
+                            estado = "scheduled"
+                        else:
+                            # Podría ser un partido finalizado
+                            marcador = marcador_div.get_text(strip=True)
+                            estado = "finished"
                 
                 # Usar la fecha actual para el partido
                 today = datetime.now().strftime('%Y-%m-%d')
@@ -73,18 +90,21 @@ def scrape_matches():
                         "name": nombre_visitante,
                         "logo": logo_visitante
                     },
-                    "time": tiempo,
                     "date": today,
-                    "odds": {
-                        "home": "1.95",  # Valores por defecto
-                        "draw": "3.25",
-                        "away": "3.60"
-                    }
+                    "status": estado,
                 }
+                
+                if estado == "live":
+                    match_data["currentTime"] = tiempo
+                    match_data["score"] = marcador
+                elif estado == "scheduled":
+                    match_data["time"] = tiempo
+                else:  # finished
+                    match_data["score"] = marcador
                 
                 league_data["matches"].append(match_data)
                 
-            if league_data["matches"]:  # Solo agregar ligas que tienen partidos
+            if league_data["matches"]:
                 result["leagues"].append(league_data)
             
         return result
