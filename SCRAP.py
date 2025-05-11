@@ -6,7 +6,7 @@ from datetime import datetime
 def scrape_matches():
     url = 'https://www.besoccer.com'
     try:
-        response = requests.get(url, timeout=5)
+        response = requests.get(url, timeout=15)
     except requests.exceptions.RequestException as e:
         return {"error": f"Fallo al conectarse: {e}"}
     
