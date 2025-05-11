@@ -1,1 +1,1 @@
-web: python SCRAP.py
+python app.py
