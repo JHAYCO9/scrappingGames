@@ -5,7 +5,10 @@ from datetime import datetime
 
 def scrape_matches():
     url = 'https://www.besoccer.com'
-    response = requests.get(url)
+    try:
+        response = requests.get(url, timeout=5)
+    except requests.exceptions.RequestException as e:
+        return {"error": f"Fallo al conectarse: {e}"}
     
     result = {"leagues": []}
     
