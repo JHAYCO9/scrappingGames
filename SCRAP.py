@@ -2,6 +2,9 @@ import json
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+from flask import Flask, jsonify
+
+app = Flask(__name__)
 
 def scrape_matches():
     url = 'https://www.besoccer.com'
@@ -111,6 +114,10 @@ def scrape_matches():
     else:
         return {"error": f"Error al obtener la página. Código de estado: {response.status_code}"}
 
-if __name__ == "__main__":
+@app.route('/api/scrape', methods=['GET'])
+def get_matches():
     matches_data = scrape_matches()
-    print(json.dumps(matches_data, ensure_ascii=False, indent=2))
+    return jsonify(matches_data)
+
+if __name__ == "__main__":
+    app.run(debug=True)
