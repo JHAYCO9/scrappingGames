@@ -21,7 +21,6 @@ def scrape_matches():
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
         paneles = soup.find_all('div', class_='panel-head')
-
         if not paneles:
             return jsonify({"error": "No se encontraron ligas."})
         
@@ -32,11 +31,9 @@ def scrape_matches():
                 
             nombre_liga = titulo_div.find('span').text.strip() if titulo_div else "Liga desconocida"
             logo_liga = titulo_div.find('img')['src'] if titulo_div and titulo_div.find('img') else ""
-
             contenedor_partidos = panel.find_next_sibling('div')
             if not contenedor_partidos:
                 continue
-
             partidos = contenedor_partidos.find_all('div', class_='team-box')
             if not partidos:
                 continue
@@ -46,22 +43,17 @@ def scrape_matches():
                 "logo": logo_liga,
                 "matches": []
             }
-
             for partido in partidos:    
                 equipos = partido.find_all('div', class_='team-info')
-
                 if len(equipos) >= 2:
                     local_div = equipos[0]
                     visitante_div = equipos[1]
-
                     nombre_local = local_div.find('div', class_='team-name').text.strip()
                     logo_local = local_div.find('img')['src'] if local_div.find('img') else ""
-
                     nombre_visitante = visitante_div.find('div', class_='team-name').text.strip()
                     logo_visitante = visitante_div.find('img')['src'] if visitante_div.find('img') else ""
                 else:
                     continue
-
                 marcador_div = partido.find('div', class_='marker')
                 tiempo = ""
                 estado = "scheduled"  # por defecto asumimos que no ha comenzado
@@ -114,7 +106,7 @@ def scrape_matches():
     else:
         return jsonify({"error": f"Error al obtener la página. Código de estado: {response.status_code}"})
 
-
 if __name__ == '__main__':
     # Railway asigna un puerto dinámico mediante la variable de entorno 'PORT'
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port)
